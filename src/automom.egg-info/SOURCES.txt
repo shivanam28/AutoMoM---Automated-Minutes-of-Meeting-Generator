@@ -1,0 +1,8 @@
+LICENSE
+README.md
+setup.py
+src/automom.egg-info/PKG-INFO
+src/automom.egg-info/SOURCES.txt
+src/automom.egg-info/dependency_links.txt
+src/automom.egg-info/requires.txt
+src/automom.egg-info/top_level.txt
