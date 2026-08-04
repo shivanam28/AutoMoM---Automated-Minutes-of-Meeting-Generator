@@ -73,11 +73,6 @@ streamlit run app.py
 Shivani Singh <br>
 B.Tech Data Science <br>
 J.C.Bose University of Science and Technology
-
-Mehak Rana <br>
-B.Tech Data Science <br>
-J.C.Bose University of Science and Technology
-
 ---
 
 ## License
