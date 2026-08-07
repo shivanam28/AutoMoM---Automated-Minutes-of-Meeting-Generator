@@ -68,13 +68,9 @@ streamlit run app.py
 
 ---
 
-## Author & Partners
+## Author
 
 Shivani Singh <br>
-B.Tech Data Science <br>
-J.C.Bose University of Science and Technology
-
-Mehak Rana <br>
 B.Tech Data Science <br>
 J.C.Bose University of Science and Technology
 
