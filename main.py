@@ -1,61 +1,44 @@
+"""
+AutoMoM CLI
+------------
+Run the pipeline on a single .txt transcript file from the command line.
+
+Usage:
+    python main.py path/to/transcript.txt
+"""
+
+import os
 import sys
-import pandas as pd
-from automom.utils.logger import logger
-from automom.utils.exception import AutoMoMException
-from automom.components.summarizer import Summarizer
-from automom.components.keyword_extraction import KeywordExtractor
-from automom.components.intent_extraction import IntentExtractor
-from automom.components.pdf_generator import PDFGenerator
 
-def run_automom_pipeline():
-    try:
-        logger.info("🚀 Starting AutoMoM - Automated Minutes of Meeting Generator...")
+sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 
-        # -------------------- FILE PATH --------------------
-        input_csv = "data/processed/test_transcripts.csv"
+from automom.pipeline import generate_mom
+from automom.pdf_export import export_to_pdf
 
-        # Load transcripts
-        logger.info(f"📄 Loading meeting transcripts from: {input_csv}")
-        transcripts_df = pd.read_csv(input_csv)
-        logger.info(f"✅ Loaded {len(transcripts_df)} transcripts for processing")
 
-        # -------------------- SUMMARIZATION --------------------
-        logger.info("🧠 Starting summarization process using BART model...")
-        summarizer = Summarizer(model_name="facebook/bart-large-cnn")
-        transcripts_df = summarizer.generate_summaries(transcripts_df)
-        logger.success("💾 Summaries saved successfully!")
+def run(transcript_path: str):
+    if not os.path.exists(transcript_path):
+        raise FileNotFoundError(f"Transcript not found: {transcript_path}")
 
-        # -------------------- KEYWORD EXTRACTION --------------------
-        logger.info("🧩 Starting keyword extraction using KeyBERT...")
-        keyword_extractor = KeywordExtractor()
-        transcripts_df = keyword_extractor.extract_keywords(transcripts_df)
-        logger.success("💾 Keywords extracted successfully!")
+    with open(transcript_path, "r", encoding="utf-8") as f:
+        transcript_text = f.read()
 
-        # -------------------- INTENT EXTRACTION --------------------
-        logger.info("🎯 Starting intent extraction using BART MNLI model...")
-        intent_extractor = IntentExtractor()
+    meeting_id = os.path.splitext(os.path.basename(transcript_path))[0]
 
-        # Handles both method names
-        if hasattr(intent_extractor, "extract_intent"):
-            transcripts_df = intent_extractor.extract_intent(transcripts_df)
-        elif hasattr(intent_extractor, "extract_intents"):
-            transcripts_df = intent_extractor.extract_intents(transcripts_df)
-        else:
-            raise AttributeError("IntentExtractor missing both 'extract_intent' and 'extract_intents' methods!")
+    print(f"Running pipeline on: {transcript_path}")
+    mom = generate_mom(transcript_text, meeting_id=meeting_id)
 
-        logger.success("💾 Intents extracted successfully!")
+    output_path = os.path.join("data/processed/pdfs", f"{meeting_id}_MoM.pdf")
+    export_to_pdf(mom, output_path)
 
-        # -------------------- PDF GENERATION --------------------
-        logger.info("📝 Generating final MoM PDF reports...")
-        pdf_generator = PDFGenerator()
-        pdf_generator.generate_pdf(transcripts_df)
-        logger.success("🎉 All MoM PDFs generated successfully!")
+    print(f"Summary : {mom['summary'][:120]}...")
+    print(f"Keywords: {', '.join(mom['keywords'])}")
+    print(f"Intent  : {mom['intent']}")
+    print(f"PDF saved to: {output_path}")
 
-        # -------------------- DONE --------------------
-        logger.success("✅ AutoMoM Pipeline Completed Successfully!")
-
-    except Exception as e:
-        raise AutoMoMException(e, sys)
 
 if __name__ == "__main__":
-    run_automom_pipeline()
+    if len(sys.argv) < 2:
+        print("Usage: python main.py path/to/transcript.txt")
+        sys.exit(1)
+    run(sys.argv[1])
