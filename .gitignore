@@ -1,7 +1,2 @@
 __pycache__/
 *.pyc
-data/
-*.zip
-*.mp3
-*.wav
-*.csv
