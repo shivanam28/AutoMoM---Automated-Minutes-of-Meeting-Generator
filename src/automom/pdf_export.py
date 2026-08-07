@@ -5,6 +5,7 @@ Takes the dict returned by pipeline.generate_mom() and writes a
 formatted Minutes-of-Meeting PDF using reportlab.
 """
 
+
 import os
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
