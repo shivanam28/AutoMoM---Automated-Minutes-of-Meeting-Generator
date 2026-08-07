@@ -1,69 +1,58 @@
-import streamlit as st
-import pandas as pd
+"""
+AutoMoM Streamlit App
+----------------------
+Upload a .txt meeting transcript -> get back a PDF Minutes-of-Meeting.
+This file only handles UI. All logic lives in src/automom/pipeline.py
+and src/automom/pdf_export.py.
+"""
+
 import os
-from automom.components.summarizer import Summarizer
-from automom.components.keyword_extraction import KeywordExtractor
-from automom.components.intent_extraction import IntentExtractor
-from automom.components.pdf_generator import PDFGenerator
-from automom.utils.logger import logger
+import sys
 
-st.set_page_config(page_title="AutoMoM - Meeting Summarizer", page_icon="🧠", layout="centered")
+sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
+import streamlit as st
 
-# Title
-st.title("🧠 AutoMoM - Automated Minutes of Meeting Generator")
-st.markdown("Upload your meeting transcript (.txt or .csv) and generate summarized minutes automatically!")
+from automom.pipeline import generate_mom
+from automom.pdf_export import export_to_pdf
 
-# File uploader
-uploaded_file = st.file_uploader("📂 Upload Meeting Transcript File", type=["txt", "csv"])
+st.set_page_config(page_title="AutoMoM", page_icon="🧠", layout="centered")
+
+st.title("🧠 AutoMoM — Automated Minutes of Meeting Generator")
+st.markdown("Upload a `.txt` meeting transcript and generate a Minutes-of-Meeting PDF.")
+
+uploaded_file = st.file_uploader("📂 Upload transcript (.txt)", type=["txt"])
 
 if uploaded_file:
-    # Read input file
-    if uploaded_file.name.endswith(".txt"):
-        transcript_text = uploaded_file.read().decode("utf-8")
-        data = pd.DataFrame([{"region": "Unknown", "meeting_id": uploaded_file.name, "transcript_text": transcript_text}])
-    else:
-        data = pd.read_csv(uploaded_file)
+    transcript_text = uploaded_file.read().decode("utf-8")
+    meeting_id = os.path.splitext(uploaded_file.name)[0]
 
-    st.success(f"✅ File '{uploaded_file.name}' uploaded successfully!")
+    st.success(f"File '{uploaded_file.name}' loaded — {len(transcript_text.split())} words.")
 
-    # Generate MoM button
     if st.button("🚀 Generate Minutes of Meeting"):
-        with st.spinner("Processing... This may take a few seconds ⏳"):
+        with st.spinner("Running pipeline: summarizing → extracting keywords → detecting intent..."):
             try:
-                # Summarization
-                st.info("🧠 Summarizing transcript using BART...")
-                summarizer = Summarizer(model_name="facebook/bart-large-cnn")
-                data = summarizer.generate_summaries(data)
+                mom = generate_mom(transcript_text, meeting_id=meeting_id)
 
-                # Keyword extraction
-                st.info("🔑 Extracting keywords using KeyBERT...")
-                keyword_extractor = KeywordExtractor()
-                data = keyword_extractor.extract_keywords(data)
-
-                # Intent extraction
-                st.info("🎯 Identifying intents using BART MNLI...")
-                intent_extractor = IntentExtractor()
-                data = intent_extractor.extract_intent(data)
-
-                # Save PDFs
-                st.info("📝 Generating final PDF report...")
                 output_dir = "data/processed/pdfs"
-                os.makedirs(output_dir, exist_ok=True)
-                pdf_generator = PDFGenerator(output_dir=output_dir)
-                pdf_generator.generate_pdf(data)
+                pdf_path = os.path.join(output_dir, f"{meeting_id}_MoM.pdf")
+                export_to_pdf(mom, pdf_path)
 
-                pdf_file = os.path.join(output_dir, f"{data.iloc[0]['meeting_id']}_MoM.pdf")
-                if os.path.exists(pdf_file):
-                    with open(pdf_file, "rb") as f:
-                        st.download_button(
-                            label="📥 Download Minutes of Meeting (PDF)",
-                            data=f,
-                            file_name=f"{data.iloc[0]['meeting_id']}_MoM.pdf",
-                            mime="application/pdf"
-                        )
-                    st.success("🎉 Minutes of Meeting generated successfully!")
-                else:
-                    st.error("⚠️ PDF generation failed. Please check logs.")
+                st.subheader("📝 Summary")
+                st.write(mom["summary"])
+
+                st.subheader("🔑 Keywords")
+                st.write(", ".join(mom["keywords"]))
+
+                st.subheader("🎯 Intent")
+                st.write(mom["intent"])
+
+                with open(pdf_path, "rb") as f:
+                    st.download_button(
+                        label="📥 Download Minutes of Meeting (PDF)",
+                        data=f,
+                        file_name=f"{meeting_id}_MoM.pdf",
+                        mime="application/pdf",
+                    )
 
             except Exception as e:
-                st.error(f"❌ Error: {e}")
+                st.error(f"❌ Pipeline failed: {e}")
