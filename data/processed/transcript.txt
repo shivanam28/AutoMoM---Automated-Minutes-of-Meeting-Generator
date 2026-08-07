@@ -1,0 +1,20 @@
+Good morning everyone. Let's start with today's project review meeting. I hope all of you have made some progress since last week. Shivani, could you please start and share your updates?
+Yes, ma’am. This week I finalized the data ingestion part of our AutoMoM project. It scans all transcript folders and loads them into a CSV file successfully. I also handled missing values and made sure the output file structure matches the expected pipeline format.
+That sounds great, Shivani. Were there any major issues you faced during this phase
+Just a small one, ma’am. The meeting date and type were not always available in the dataset, so I had to leave them as “unknown.” Otherwise, everything works fine.
+Good approach. You can handle that during data preprocessing later. Alright, Mehak, can you go next?
+Sure, ma’am. I worked on the summarizer component using the BART model. I tested it with a few meeting transcripts, and the model generated readable and accurate summaries. However, longer transcripts take a bit more time to process.
+That’s expected, Mehak. Did you check the summary quality for different meeting lengths?
+Yes, ma’am. For small meetings of around 500 words, it works very fast. For larger transcripts—around 5,000 words—it still performs well but takes nearly 2 minutes per file. I plan to implement chunking next so we can summarize longer transcripts more efficiently.
+Excellent. Please document that improvement for the final version. Okay, Priya, what about your progress?
+Ma’am, I completed the keyword and intent extraction modules. I used KeyBERT for keywords and BART MNLI for intent classification. It identifies topics like decisions, discussions, and action items from the summarized text. I’ve also started integrating it with the MoM generator.
+Good work, Priya. Did you test if the intents align correctly with the summaries?
+Yes, ma’am. In most cases, they match the conversation flow. I’ll fine-tune it once we finalize the summarization output structure.
+Alright, that’s good progress from all of you. Now, one important thing—we’ll need a final pipeline that runs all these modules end-to-end. Shivani, you can take charge of connecting the summarizer output to the intent and keyword extractors. Mehak, ensure the BART model handles large inputs properly. Priya, finalize the PDF generator so we can export the final minutes of meeting.
+Yes, ma’am, we’ll coordinate and test the complete pipeline by tomorrow.
+Perfect. Also, don’t forget to clean up the logs and add comments to your code. The final demo should look professional.
+Noted, ma’am.
+Great. Any other issues or blockers before we wrap up?
+No ma’am, everything is on track.
+Alright then, good job everyone. Let’s meet again next Monday for the final testing session. Have a productive weekend!
+Thank you, ma’am. You too!
